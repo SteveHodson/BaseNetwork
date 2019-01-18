@@ -1,0 +1,149 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Builds the named VPC, Internet Gateway and Flow Logs.  
+  Do not enable flow logs for small environments.
+  * VPC
+  * Internet Gateway
+  * Virtual Private Gateway
+  * VPC Flow Logs
+  * CloudWatch Log Group
+  * IAM Role for allowing flow logs communication to CWLogs
+
+Parameters:
+  EnvName:
+    Description: Name of the environment, used for tagging resources
+    Type: String
+  VpcCidrBlock:
+    Description: CIDR block for this private network
+    AllowedPattern: '([0-9]{1,3}\.){3}[0-9]{1,3}(\/(1[6-9]|2[0-3]))'
+    Type: String
+  VpcType:
+    Description: Determine whether to create a publicly facing VPC
+    AllowedValues: 
+      - public
+      - private
+    ConstraintDescription: Must be either public or private.
+    Default: public
+    Type: String
+
+Conditions:
+  PublicVpcResource: !Equals [ !Ref VpcType, public ]
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:vpc
+
+  Igw:
+    Condition: PublicVpcResource
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:igw
+
+  AttachInternetGateway:
+    Condition: PublicVpcResource
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: Igw
+    Properties:
+      VpcId:             !Ref Vpc
+      InternetGatewayId: !Ref Igw
+
+  Vgw:
+    Type: AWS::EC2::VPNGateway
+    Properties:
+      Type: ipsec.1
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:vgw
+
+  AttachVirtualGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: Vgw
+    Properties:
+      VpcId:        !Ref Vpc
+      VpnGatewayId: !Ref Vgw
+  
+  FlowLogsRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: !Sub ${EnvName}_flowlogs_role
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: Allow
+            Principal: 
+              Service: 
+                - vpc-flow-logs.amazonaws.com
+            Action: 
+              - sts:AssumeRole
+      Path: /
+      Policies: 
+        - 
+          PolicyName: !Sub ${EnvName}_flowlogs-policy
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - 
+                Effect: Allow
+                Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                - logs:DescribeLogGroups
+                - logs:DescribeLogStreams
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${EnvName}-flowlogs
+
+  VpcFlowLog:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      DeliverLogsPermissionArn: !GetAtt FlowLogsRole.Arn
+      LogGroupName: !Sub ${EnvName}-flowlogs
+      ResourceId: !Ref Vpc
+      ResourceType: VPC
+      TrafficType: ALL
+
+  VpcFlowLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub ${EnvName}-flowlogs 
+      RetentionInDays: 3
+
+  VpcFlowLogStream:
+    DependsOn: VpcFlowLogGroup
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: !Sub ${EnvName}-flowlogs
+      LogStreamName: !Sub ${EnvName}-vpc-flowlogs
+
+Outputs:
+  VpcId:
+    Value: !Ref Vpc
+    Description: A reference to the newly created VPC
+    Export:
+      Name: !Sub ${EnvName}:vpc:id
+  VpcCidr:
+    Value: !Ref VpcCidrBlock
+    Description: The VPC cidr block used to create this network
+    Export:
+      Name: !Sub ${EnvName}:vpc:cidr
+  IgwId:
+    Condition: PublicVpcResource
+    Value: !Ref Igw
+    Description: A reference to the newly created Internet Gateway
+    Export:
+      Name: !Sub ${EnvName}:igw:id
+  VgwId:
+    Value: !Ref Vgw
+    Description: A reference to the newly created Virtual Private Gateway
+    Export:
+      Name: !Sub ${EnvName}:vgw:id
