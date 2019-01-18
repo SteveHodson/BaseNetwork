@@ -53,10 +53,10 @@ Mappings:
 Conditions:
   TwoLayerResource: 
     !Or
-    - !Equals [ !Ref ZonesRequired, 3 ]
-    - !Equals [ !Ref ZonesRequired, 4 ]
+    - !Equals [ !Ref NetworkLayers, 2 ]
+    - !Equals [ !Ref NetworkLayers, 3 ]
   ThreeLayerResource: 
-    !Equals [ !Ref ZonesRequired, 4 ]
+    !Equals [ !Ref NetworkLayers, 3 ]
 
 
 Resources:

@@ -26,9 +26,21 @@ Parameters:
     ConstraintDescription: Must be either public or private.
     Default: public
     Type: String
-
+  NetworkLayers:
+    Description: Number of layers to be used.
+    MaxValue: 3
+    MinValue: 1
+    Default: 2
+    ConstraintDescription: Must be a number between 1 and 3 inclusive.
+    Type: Number
+  
 Conditions:
-  PublicVpcResource: !Equals [ !Ref VpcType, public ]
+  PublicVpcResource: !Not 
+  - !And 
+    - !Equals [ !Ref VpcType, private ]
+    - !Or 
+      - !Equals [ !Ref NetworkLayers, 1 ]
+      - !Equals [ !Ref NetworkLayers, 2 ]
 
 Resources:
   Vpc:
