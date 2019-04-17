@@ -39,22 +39,41 @@ package-custom: build-custom
 		--output-template-file packaged.yaml \
 		--s3-bucket $(ASSET_STORAGE)
 
+## deploy the custom resource
 deploy-custom: package-custom
 	@aws cloudformation deploy \
 		--template-file packaged.yaml \
 		--capabilities CAPABILITY_NAMED_IAM \
-		--parameter-overrides \
-		    PipelineName=$(PIPELINE_NAME) \
-		--stack-name $(STACK_NAME)
+		--stack-name $(STACK_NAME) \
+		--region $(AWS_REGION)
 	@aws cloudformation update-termination-protection \
 		--stack-name $(STACK_NAME) \
 		--enable-termination-protection
 	$(MAKE) clean
 
+## clean up resources associated with the custom resource
 clean-custom:
 	@rm packaged.yaml
 	@rm -rf ./dist
 
+## package up all the assets ready for deployment
+package:
+	@aws cloudformation package \
+		--template-file ./cfn/build.yaml \
+		--output-template-file packaged.yaml \
+		--s3-bucket $(ASSET_STORAGE)
+
+## deploy the custom resource
+deploy: package
+	@aws cloudformation deploy \
+		--template-file packaged.yaml \
+		--capabilities CAPABILITY_NAMED_IAM \
+		--stack-name $(STACK_NAME) \
+		--region $(AWS_REGION)
+
+	@aws cloudformation update-termination-protection \
+		--stack-name $(STACK_NAME) \
+		--enable-termination-protection
 
 delete:
 	@aws cloudformation update-termination-protection \
