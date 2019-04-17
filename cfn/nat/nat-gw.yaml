@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  This script will create two or three NAT Service Gateways
+  depending on the Region
+  * EIP
+  * Nat Service Gateway and attach to hosting subnets
+  * Modification of existing Route Tables
+
+Parameters:
+  EnvName:
+    Type: String 
+    Description: Environment name used to access Exported Values.
+  ZonesRequired:
+    Description: Number of Zones required
+    Type: String
+
+Conditions:
+  TwoZoneResource: 
+    !Or
+    - !Equals [ !Ref ZonesRequired, "2" ]
+    - !Equals [ !Ref ZonesRequired, "3" ]
+  ThreeZoneResource: 
+    !Equals [ !Ref ZonesRequired, "3" ]
+
+Resources:
+# Define the EIPs
+  ZoneOneEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  ZoneTwoEIP:
+    Condition: TwoZoneResource
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  ZoneThreeEIP:
+    Condition: ThreeZoneResource
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+# Define the NAT Services
+  ZoneOneNAT:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt ZoneOneEIP.AllocationId
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-public-a:id"
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:nat-gw-a
+  ZoneTwoNAT:
+    Condition: TwoZoneResource
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt ZoneTwoEIP.AllocationId
+      SubnetId: 
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-public-b:id"
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:nat-gw-b
+  ZoneThreeNAT:
+    Condition: ThreeZoneResource
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt ZoneThreeEIP.AllocationId
+      SubnetId: 
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-public-c:id"
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:nat-gw-c
+
+# Modify the private route tables
+  PrivateRouteModificationA:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: 
+        Fn::ImportValue:
+          !Sub "${EnvName}:rt-private-a:id"
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref ZoneOneNAT
+  PrivateRouteModificationB:
+    Condition: TwoZoneResource
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:rt-private-b:id"
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref ZoneTwoNAT
+  PrivateRouteModificationC:
+    Condition: ThreeZoneResource
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:rt-private-c:id"
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref ZoneThreeNAT

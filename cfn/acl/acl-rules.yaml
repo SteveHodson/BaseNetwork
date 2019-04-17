@@ -1,0 +1,187 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Defines the ACL rules and associates these with existing ACLs.
+  * NetworkACL Rules
+
+Parameters:
+  EnvName:
+    Type: String
+    Description: Name of the environment, used for tagging resources
+
+Resources:
+# NACL Rules
+
+# Public Subnet Rules
+  PublicAnyHTTPInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-public:id"
+      RuleNumber: 100
+      RuleAction: allow
+      CidrBlock: 0.0.0.0/0
+      Protocol: 6
+      PortRange:
+        From: 80
+        To: 80
+  PublicAnyHTTPSInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-public:id"
+      RuleNumber: 110
+      RuleAction: allow
+      CidrBlock: 0.0.0.0/0
+      Protocol: 6
+      PortRange:
+        From: 443
+        To: 443
+
+  PublicPrivateHTTPOutbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-public:id"
+      RuleNumber: 120
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-private:cidr"
+      Protocol: 6
+      PortRange:
+        From: 80
+        To: 80
+      Egress: true
+
+  PublicPrivateHTTPSOutbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-public:id"
+      RuleNumber: 130
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-private:cidr"
+      Protocol: 6
+      PortRange:
+        From: 443
+        To: 443
+      Egress: true
+
+  PublicEphemeralInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-public:id"
+      RuleNumber: 150
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-private:cidr"
+      Protocol: 6
+      PortRange:
+        From: 1024
+        To: 65535
+  PublicEphemeralOutbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-public:id"
+      RuleNumber: 150
+      RuleAction: allow
+      CidrBlock: 0.0.0.0/0
+      Protocol: 6
+      PortRange:
+        From: 1024
+        To: 65535
+      Egress: true
+
+# Private Subnet Rules
+  PrivatePublicHTTPInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-private:id"
+      RuleNumber: 100
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-public:cidr"
+      Protocol: 6
+      PortRange:
+        From: 80
+        To: 80
+  PrivatePublicHTTPSInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-private:id"
+      RuleNumber: 110
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-public:cidr"
+      Protocol: 6
+      PortRange:
+        From: 443
+        To: 443
+  PrivatePublicEphemeralOutbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-private:id"
+      RuleNumber: 140
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-public:cidr"
+      Protocol: 6
+      PortRange:
+        From: 1024
+        To: 65535
+      Egress: true
+  PrivatePersistEphemeralInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-private:id"
+      RuleNumber: 150
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-persistence:cidr"
+      Protocol: 6
+      PortRange:
+        From: 1024
+        To: 65535
+
+# Persistence Subnet Rules
+# Specific persistence layer ports will be defined later due to unknown data source
+  PersistenceEphemeralOutbound:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:acl-persistence:id"
+      RuleNumber: 150
+      RuleAction: allow
+      CidrBlock:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-private:cidr"
+      Protocol: 6
+      PortRange:
+        From: 1024
+        To: 65535
+      Egress: true

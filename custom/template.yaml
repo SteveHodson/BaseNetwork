@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CidrCalculator Lambda Function for use with CFN custom resources.
+
+Resources:
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: SubnetCidrCalculator
+      Description: Function calculates the Cidr Ranges, for use with CFN
+      Code: ../dist/calculator.zip
+      Handler: calculator.handler
+      Runtime: python3.6
