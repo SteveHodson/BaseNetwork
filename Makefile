@@ -46,6 +46,7 @@ deploy-custom: package-custom
 		--capabilities CAPABILITY_NAMED_IAM \
 		--stack-name $(STACK_NAME)-custom \
 		--region $(AWS_REGION)
+
 	@aws cloudformation update-termination-protection \
 		--stack-name $(STACK_NAME)-custom \
 		--enable-termination-protection
@@ -56,26 +57,32 @@ clean-custom:
 	@rm packaged.yaml
 	@rm -rf ./dist
 
-## package up all the assets ready for deployment
+## package up all the network assets ready for deployment
 package:
 	@aws cloudformation package \
 		--template-file ./cfn/build.yaml \
 		--output-template-file packaged.yaml \
 		--s3-bucket $(ASSET_STORAGE)
 
-## deploy the custom resource
+## deploy the cfn for building the network
 deploy: package
 	@aws cloudformation deploy \
 		--template-file packaged.yaml \
 		--capabilities CAPABILITY_NAMED_IAM \
 		--stack-name $(STACK_NAME) \
-		--region $(AWS_REGION)
+		--region $(AWS_REGION) \
+		--parameter-overrides $(shell cat build.properties)
 
 	@aws cloudformation update-termination-protection \
 		--stack-name $(STACK_NAME) \
 		--enable-termination-protection
+	$(MAKE) clean
 
-delete:
+## clean up resources associated with the network deployment
+clean:
+	@rm packaged.yaml
+	
+delete-stack:
 	@aws cloudformation update-termination-protection \
                 --stack-name $(STACK_NAME) \
                 --no-enable-termination-protection
