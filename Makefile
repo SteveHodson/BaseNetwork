@@ -3,7 +3,7 @@
 #
 # List of Parameters added from external source
 
-STACK_NAME ?= sh01-vpc-v1
+STACK_NAME ?= tfs-vpc-v1
 ASSET_STORAGE ?= $(STACK_NAME)
 AWS_REGION := eu-west-1
 
@@ -22,13 +22,13 @@ create-store:
 
 ## validate all the cfn templates
 validate: 
-	@which cfn-lint | pip install cfn-lint --user
+	@which cfn-lint || pip install cfn-lint --user
 	@cfn-lint $(TEMPLATES)
 
 ## create the custom resource asset
 build-custom:
 	@mkdir ./dist
-	@pip3 install netaddr --target ./dist
+	@pip install netaddr --target ./dist
 	@cp custom/calculator.py ./dist
 	@cd ./dist && zip -r calculator.zip .
 
@@ -53,7 +53,7 @@ deploy-custom: package-custom
 
 ## clean up resources associated with the custom resource
 clean-custom:
-	@rm packaged.yaml
+	#@rm packaged.yaml
 	@rm -rf ./dist
 
 ## package up all the assets ready for deployment

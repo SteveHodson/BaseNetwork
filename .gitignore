@@ -1,0 +1,5 @@
+# virtual env
+env/
+
+# custom build
+dist/
