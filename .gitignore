@@ -3,3 +3,4 @@ env/
 
 # custom build
 dist/
+packaged.yaml

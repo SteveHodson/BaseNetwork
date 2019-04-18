@@ -73,9 +73,9 @@ deploy: package
 		--region $(AWS_REGION) \
 		--parameter-overrides $(shell cat build.properties)
 
-	@aws cloudformation update-termination-protection \
-		--stack-name $(STACK_NAME) \
-		--enable-termination-protection
+	# @aws cloudformation update-termination-protection \
+	# 	--stack-name $(STACK_NAME) \
+	# 	--enable-termination-protection
 	$(MAKE) clean
 
 ## clean up resources associated with the network deployment
@@ -83,9 +83,9 @@ clean:
 	@rm packaged.yaml
 	
 delete-stack:
-	@aws cloudformation update-termination-protection \
-                --stack-name $(STACK_NAME) \
-                --no-enable-termination-protection
+	# @aws cloudformation update-termination-protection \
+    #             --stack-name $(STACK_NAME) \
+    #             --no-enable-termination-protection
 	@aws cloudformation delete-stack --stack-name $(STACK_NAME)
 
 events:

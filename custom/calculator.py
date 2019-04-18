@@ -33,7 +33,7 @@ def handler(event, context):
     response_data = {}
     properties = event.get("ResourceProperties", {})
     network_cidr = properties["VpcCidrBlock"]
-    network_layers = int(properties["Layers"])
+    network_layers = int(properties["NetworkLayers"])
     availability_zones = int(properties["ZonesRequired"])
     
     # get the network address for a given network_cidr
@@ -69,7 +69,7 @@ def handler(event, context):
             network_by_layer = list(network.subnet(tmp_prefix))
             network = network_by_layer[1]
             network_by_az = list(network_by_layer[0].subnet(tmp_prefix+az_modifier))
-            response_data[f"layer{layer_index}"] = str(network_by_layer[0]) + "," + ",".join([str(nw) for nw in network_by_az])
+            response_data[f"NetworkLayer{layer_index}"] = str(network_by_layer[0]) + "," + ",".join([str(nw) for nw in network_by_az])
     except Exception as ex:
         logger.error(ex)
         return send_response(

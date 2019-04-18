@@ -59,18 +59,18 @@ Resources:
         NetworkLayers: !Ref NetworkLayers
   
   # Delegate creation of VPC to sub-stack
-  # SubnetSubStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: network/subnets.yaml
-  #     TimeoutInMinutes: 5
-  #     Parameters:
-  #       VpcId:         !GetAtt VpcSubStack.Outputs.VpcId
-  #       EnvName:       !Ref EnvName
-  #       VpcCidrBlock:  !Ref VpcCidrBlock
-  #       NetworkLayers: !Ref NetworkLayers
-  #       ZonesRequired: !Ref ZonesRequired
-  #       VpcType:       !Ref VpcType
+  SubnetSubStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: network/subnets.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        VpcId:         !GetAtt VpcSubStack.Outputs.VpcId
+        EnvName:       !Ref EnvName
+        VpcCidrBlock:  !Ref VpcCidrBlock
+        NetworkLayers: !Ref NetworkLayers
+        ZonesRequired: !Ref ZonesRequired
+        VpcType:       !Ref VpcType
   
   # Delegate creation of Routes to sub-Stack
   # RoutesSubStack:
