@@ -1,12 +1,13 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CidrCalculator Lambda Function for use with CFN custom resources.
-
+Transform: 'AWS::Serverless-2016-10-31'
+Description: CidrCalculator Lambda Function for use as a CFN custom resources.
 Resources:
   Function:
-    Type: AWS::Lambda::Function
+    Type: AWS::Serverless::Function
     Properties:
       FunctionName: SubnetCidrCalculator
       Description: Function calculates the Cidr Ranges, for use with CFN
-      Code: ../dist/calculator.zip
+      CodeUri: ../dist/calculator.zip
       Handler: calculator.handler
       Runtime: python3.6

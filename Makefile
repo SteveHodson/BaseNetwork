@@ -44,16 +44,16 @@ deploy-custom: package-custom
 	@aws cloudformation deploy \
 		--template-file packaged.yaml \
 		--capabilities CAPABILITY_NAMED_IAM \
-		--stack-name $(STACK_NAME) \
+		--stack-name $(STACK_NAME)-custom \
 		--region $(AWS_REGION)
 	@aws cloudformation update-termination-protection \
-		--stack-name $(STACK_NAME) \
+		--stack-name $(STACK_NAME)-custom \
 		--enable-termination-protection
-	$(MAKE) clean
+	$(MAKE) clean-custom
 
 ## clean up resources associated with the custom resource
 clean-custom:
-	#@rm packaged.yaml
+	@rm packaged.yaml
 	@rm -rf ./dist
 
 ## package up all the assets ready for deployment
