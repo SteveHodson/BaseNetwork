@@ -64,7 +64,6 @@ Resources:
   AttachInternetGateway:
     Condition: PublicVpcResource
     Type: AWS::EC2::VPCGatewayAttachment
-    DependsOn: Igw
     Properties:
       VpcId:             !Ref Vpc
       InternetGatewayId: !Ref Igw
@@ -79,7 +78,6 @@ Resources:
 
   AttachVirtualGateway:
     Type: AWS::EC2::VPCGatewayAttachment
-    DependsOn: Vgw
     Properties:
       VpcId:        !Ref Vpc
       VpnGatewayId: !Ref Vgw
