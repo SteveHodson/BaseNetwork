@@ -27,7 +27,7 @@ validate:
 
 ## create the custom resource asset
 build-custom:
-	@mkdir ./dist
+	@mkdir -p ./dist
 	@pip install netaddr --target ./dist
 	@cp custom/calculator.py ./dist
 	@cd ./dist && zip -r calculator.zip .
