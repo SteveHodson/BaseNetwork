@@ -19,18 +19,43 @@ Parameters:
     MinValue: 1
     MaxValue: 3
     Type: Number
+  NetworkLayers:
+    Description: Number of layers to be used.
+    MaxValue: 3
+    MinValue: 1
+    Default: 2
+    ConstraintDescription: Must be a number between 1 and 3 inclusive.
+    Type: Number
+  VpcType:
+    Description: Determine a public or private VPC
+    AllowedValues: 
+      - public
+      - private
+    ConstraintDescription: Must be either public or private.
+    Default: public
+    Type: String
+  
 
 Conditions:
+  PublicTypeTable: !Equals [ !Ref VpcType, public]
   TwoZoneResource: 
     !Or
     - !Equals [ !Ref ZonesRequired, 2 ]
     - !Equals [ !Ref ZonesRequired, 3 ]
   ThreeZoneResource: 
     !Equals [ !Ref ZonesRequired, 3 ]
+  TwoLayerResource: 
+    !Or
+    - !Equals [ !Ref NetworkLayers, 2 ]
+    - !Equals [ !Ref NetworkLayers, 3 ]
+  ThreeLayerResource: 
+    !Equals [ !Ref NetworkLayers, 3 ]
+
 
 Resources:
 # Route tables with associations
   PublicRouteTable:
+    Condition: PublicTypeTable
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
@@ -38,6 +63,7 @@ Resources:
       - Key: Name
         Value: !Sub ${EnvName}:rt-public
   AttachPublicSubnetA:
+    Condition: PublicTypeTable
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -45,7 +71,7 @@ Resources:
           !Sub "${EnvName}:sn-public-a:id"
       RouteTableId: !Ref PublicRouteTable
   AttachPublicSubnetB:
-    Condition: TwoZoneResource
+    Condition: [PublicTypeTable, TwoZoneResource]
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -53,7 +79,7 @@ Resources:
           !Sub "${EnvName}:sn-public-b:id"
       RouteTableId: !Ref PublicRouteTable
   AttachPublicSubnetC:
-    Condition: ThreeZoneResource
+    Condition: [PublicTypeTable, ThreeZoneResource]
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -62,6 +88,7 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   PrivateRouteTableA:
+    Condition: TwoLayerResource
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
@@ -69,6 +96,7 @@ Resources:
       - Key: Name
         Value: !Sub ${EnvName}:rt-private-a
   AttachPrivateSubnetA:
+    Condition: TwoLayerResource
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -77,7 +105,7 @@ Resources:
       RouteTableId: !Ref PrivateRouteTableA
 
   PrivateRouteTableB:
-    Condition: TwoZoneResource
+    Condition: [TwoLayerResource, TwoZoneResource]
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
@@ -85,7 +113,7 @@ Resources:
       - Key: Name
         Value: !Sub ${EnvName}:rt-private-b
   AttachPrivateSubnetB:
-    Condition: TwoZoneResource
+    Condition: [TwoLayerResource, TwoZoneResource]
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -94,7 +122,7 @@ Resources:
       RouteTableId: !Ref PrivateRouteTableB
   
   PrivateRouteTableC:
-    Condition: ThreeZoneResource
+    Condition: [TwoLayerResource, ThreeZoneResource]
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
@@ -102,7 +130,7 @@ Resources:
       - Key: Name
         Value: !Sub ${EnvName}:rt-private-c
   AttachPrivateSubnetC:
-    Condition: ThreeZoneResource
+    Condition: [TwoLayerResource, ThreeZoneResource]
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -111,6 +139,7 @@ Resources:
       RouteTableId: !Ref PrivateRouteTableC
 
   PersistenceRouteTableA:
+    Condition: ThreeLayerResource
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
@@ -118,6 +147,7 @@ Resources:
       - Key: Name
         Value: !Sub ${EnvName}:rt-persistence-a
   AttachPersistenceSubnetA:
+    Condition: ThreeLayerResource
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -126,7 +156,7 @@ Resources:
       RouteTableId: !Ref PersistenceRouteTableA
 
   PersistenceRouteTableB:
-    Condition: TwoZoneResource
+    Condition: [ThreeLayerResource, TwoZoneResource]
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
@@ -134,7 +164,7 @@ Resources:
       - Key: Name
         Value: !Sub ${EnvName}:rt-persistence-b
   AttachPersistenceSubnetB:
-    Condition: TwoZoneResource
+    Condition: [ThreeLayerResource, TwoZoneResource]
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -143,7 +173,7 @@ Resources:
       RouteTableId: !Ref PersistenceRouteTableB
 
   PersistenceRouteTableC:
-    Condition: ThreeZoneResource
+    Condition: [ThreeLayerResource, ThreeZoneResource]
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
@@ -151,7 +181,7 @@ Resources:
       - Key: Name
         Value: !Sub ${EnvName}:rt-persistence-c
   AttachPersistenceSubnetC:
-    Condition: ThreeZoneResource
+    Condition: [ThreeLayerResource, ThreeZoneResource]
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
@@ -161,6 +191,7 @@ Resources:
 
 # Routes
   InternetAccess:
+    Condition: PublicTypeTable
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
