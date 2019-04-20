@@ -1,1 +1,2 @@
 netaddr==0.7.19
+cfn-lint==0.18.1
