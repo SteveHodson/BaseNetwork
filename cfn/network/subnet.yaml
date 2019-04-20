@@ -3,10 +3,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Builds the subnets for a given subnet type [public, private or persistence].
   * Subnets
+
 Parameters:
   VpcId:
-    Type: AWS::EC2::VPC::Id
     Description: Internal Id of an existing VPC
+    Type: AWS::EC2::VPC::Id
   EnvName:
     Description: Name of the environment, used for tagging resources
     Type: String
@@ -15,11 +16,11 @@ Parameters:
     Type: Number
   SubnetType:
     Description: Type of subnet being built
-    Type: String
     AllowedValues: 
       - public
       - private
       - persistence
+    Type: String
   SubnetCidrBlocks:
     Description: List of CIDR blocks for the subnet type
     Type: CommaDelimitedList
@@ -103,6 +104,7 @@ Resources:
       TrafficType: REJECT
   SubnetBFlowLog:
     Type: AWS::EC2::FlowLog
+    Condition: TwoZoneResource
     Properties:
       DeliverLogsPermissionArn: !Sub arn:aws:iam::${AWS::AccountId}:role/${EnvName}_flowlogs_role
       LogGroupName: !Sub ${EnvName}-flowlogs
