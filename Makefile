@@ -9,9 +9,6 @@ AWS_REGION := eu-west-1
 
 TEMPLATES := custom/template.yaml cfn/build.yaml $(wildcard cfn/*/*.yaml)
 
-show: $(wildcard cfn/*/*.yaml)
-	@echo $^
-
 ## Create asset storage and keep assets for only a day
 create-store:
 	@aws s3 mb s3://$(ASSET_STORAGE) \
@@ -21,8 +18,7 @@ create-store:
 	--lifecycle-configuration '{"Rules": [{"Expiration": {"Days": 1},"Status": "Enabled","ID":"Temp store for deployable assets","Prefix":""}]}'
 
 ## validate all the cfn templates
-validate: 
-	@which cfn-lint || pip install cfn-lint --user
+validate:
 	@cfn-lint $(TEMPLATES)
 
 ## create the custom resource asset
