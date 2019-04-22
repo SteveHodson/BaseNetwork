@@ -4,7 +4,6 @@ Description: >
   Builds the route tables and a small set of basic routes which will be added to as the cloud solution takes shape.
   * Route Tables
   * Route Table Associations with pre-existing subnets
-  * Public Route to Internet Gateway
 
 Parameters:
   VpcId:
@@ -19,13 +18,6 @@ Parameters:
     MinValue: 1
     MaxValue: 3
     Type: String
-  # NetworkLayers:
-  #   Description: Number of layers to be used.
-  #   MaxValue: 3
-  #   MinValue: 1
-  #   Default: 2
-  #   ConstraintDescription: Must be a number between 1 and 3 inclusive.
-  #   Type: Number
   EnvType:
     Description: Type of env, used to find the associated subnets
     AllowedValues: 
@@ -38,26 +30,41 @@ Parameters:
 
 Conditions:
   TwoZoneResource: 
-    !Or [ !Equals [ !Ref ZonesRequired, 2 ], !Equals [ !Ref ZonesRequired, 3 ] ]
+    !Or
+      - !Equals [ !Ref ZonesRequired, 2 ]
+      - !Equals [ !Ref ZonesRequired, 3 ]
+      - !Equals [ !Ref ZonesRequired, 4 ]
   ThreeZoneResource: 
-    !Equals [ !Ref ZonesRequired, 3 ]
+    !Or
+      - !Equals [ !Ref ZonesRequired, 3 ]
+      - !Equals [ !Ref ZonesRequired, 4 ] 
+  FourZoneResource: 
+    !Equals [ !Ref ZonesRequired, 4 ]
 
 Resources:
-# Route tables with associations
-  RouteTable:
+  RouteTableA:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcId
       Tags:
       - Key: Name
-        Value: !Sub ${EnvName}:rt-${EnvType}
+        Value: !Sub ${EnvName}:rt-${EnvType}-a
   AttachSubnetA:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-a:id"
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref RouteTableA
+
+  RouteTableB:
+    Type: AWS::EC2::RouteTable
+    Condition: TwoZoneResource
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:rt-${EnvType}-b
   AttachSubnetB:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Condition: TwoZoneResource
@@ -65,168 +72,62 @@ Resources:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-b:id"
-      RouteTableId: !Ref PublicRouteTable
-  AttachSubnetC:
+      RouteTableId: !Ref RouteTableB
+  
+  RouteTableC:
+    Type: AWS::EC2::RouteTable
     Condition: ThreeZoneResource
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:rt-${EnvType}-c
+  AttachSubnetC:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: ThreeZoneResource
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-c:id"
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref RouteTableC
+  RouteTableD:
+    Type: AWS::EC2::RouteTable
+    Condition: FourZoneResource
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:rt-${EnvType}-d
+  AttachSubnetD:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: FourZoneResource
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-d:id"
+      RouteTableId: !Ref RouteTableD
 
-#   PrivateRouteTableA:
-#     Condition: TwoLayerResource
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-private-a
-#   AttachPrivateSubnetA:
-#     Condition: TwoLayerResource
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-private-a:id"
-#       RouteTableId: !Ref PrivateRouteTableA
-
-#   PrivateRouteTableB:
-#     Condition: [TwoLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-private-b
-#   AttachPrivateSubnetB:
-#     Condition: [TwoLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-private-b:id"
-#       RouteTableId: !Ref PrivateRouteTableB
-  
-#   PrivateRouteTableC:
-#     Condition: [TwoLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-private-c
-#   AttachPrivateSubnetC:
-#     Condition: [TwoLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-private-c:id"
-#       RouteTableId: !Ref PrivateRouteTableC
-
-#   PersistenceRouteTableA:
-#     Condition: ThreeLayerResource
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-persistence-a
-#   AttachPersistenceSubnetA:
-#     Condition: ThreeLayerResource
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-persistence-a:id"
-#       RouteTableId: !Ref PersistenceRouteTableA
-
-#   PersistenceRouteTableB:
-#     Condition: [ThreeLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-persistence-b
-#   AttachPersistenceSubnetB:
-#     Condition: [ThreeLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-persistence-b:id"
-#       RouteTableId: !Ref PersistenceRouteTableB
-
-#   PersistenceRouteTableC:
-#     Condition: [ThreeLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-persistence-c
-#   AttachPersistenceSubnetC:
-#     Condition: [ThreeLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-persistence-c:id"
-#       RouteTableId: !Ref PersistenceRouteTableC
-
-# # Routes
-#   InternetAccess:
-#     Condition: PublicTypeTable
-#     Type: AWS::EC2::Route
-#     Properties:
-#       DestinationCidrBlock: 0.0.0.0/0
-#       RouteTableId: !Ref PublicRouteTable
-#       GatewayId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:igw:id"
-
-# Outputs:
-#   PublicRouteTable:
-#     Value: !Ref PublicRouteTable
-#     Description: A reference to the Public RouteTable 
-#     Export:
-#       Name: !Sub ${EnvName}:rt-public:id
-
-#   PrivateRouteTableA:
-#     Value: !Ref PrivateRouteTableA
-#     Description: A reference to the Private RouteTableA
-#     Export:
-#       Name: !Sub ${EnvName}:rt-private-a:id 
-#   PrivateRouteTableB:
-#     Condition: TwoZoneResource
-#     Value: !Ref PrivateRouteTableB
-#     Description: A reference to the Private RouteTableB
-#     Export:
-#       Name: !Sub ${EnvName}:rt-private-b:id
-#   PrivateRouteTableC:
-#     Condition: ThreeZoneResource
-#     Value: !Ref PrivateRouteTableC
-#     Description: A reference to the Private RouteTableC
-#     Export:
-#       Name: !Sub ${EnvName}:rt-private-c:id 
-
-#   PersistenceRouteTableA:
-#     Value: !Ref PersistenceRouteTableA
-#     Description: A reference to the Persistence RouteTableA
-#     Export:
-#       Name: !Sub ${EnvName}:rt-persistence-a:id
-#   PersistenceRouteTableB:
-#     Condition: TwoZoneResource
-#     Value: !Ref PersistenceRouteTableB
-#     Description: A reference to the Persistence RouteTableB
-#     Export:
-#       Name: !Sub ${EnvName}:rt-persistence-b:id
-#   PersistenceRouteTableC:
-#     Condition: ThreeZoneResource
-#     Value: !Ref PersistenceRouteTableC
-#     Description: A reference to the Persistence RouteTableC
-#     Export:
-#       Name: !Sub ${EnvName}:rt-persistence-c:id
+Outputs:
+  RouteTableA:
+    Value: !Ref RouteTableA
+    Description: A reference to the RouteTableA
+    Export:
+      Name: !Sub ${EnvName}:rt-${EnvType}-a:id 
+  RouteTableB:
+    Condition: TwoZoneResource
+    Value: !Ref RouteTableB
+    Description: A reference to the RouteTableB
+    Export:
+      Name: !Sub ${EnvName}:rt-${EnvType}-b:id
+  RouteTableC:
+    Condition: ThreeZoneResource
+    Value: !Ref RouteTableC
+    Description: A reference to the RouteTableC
+    Export:
+      Name: !Sub ${EnvName}:rt-${EnvType}-c:id 
+  RouteTableD:
+    Condition: FourZoneResource
+    Value: !Ref RouteTableD
+    Description: A reference to the RouteTableD
+    Export:
+      Name: !Sub ${EnvName}:rt-${EnvType}-d:id 

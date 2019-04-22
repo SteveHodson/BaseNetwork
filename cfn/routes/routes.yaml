@@ -17,15 +17,15 @@ Parameters:
     Description: Number of Zones required
     Default: 1
     MinValue: 1
-    MaxValue: 3
+    MaxValue: 4
     Type: String
-  # NetworkLayers:
-  #   Description: Number of layers to be used.
-  #   MaxValue: 3
-  #   MinValue: 1
-  #   Default: 2
-  #   ConstraintDescription: Must be a number between 1 and 3 inclusive.
-  #   Type: Number
+  NetworkLayers:
+    Description: Number of layers to be used.
+    MaxValue: 3
+    MinValue: 1
+    Default: 2
+    ConstraintDescription: Must be a number between 1 and 3 inclusive.
+    Type: Number
   VpcType:
     Description: Determine a public or private VPC
     AllowedValues: 
@@ -35,187 +35,66 @@ Parameters:
     Default: public
     Type: String  
 
-Conditions:
-  PublicTypeTable: 
-    !Equals [ !Ref VpcType, public]
-  TwoZoneResource: 
-    !Or [ !Equals [ !Ref ZonesRequired, 2 ], !Equals [ !Ref ZonesRequired, 3 ] ]
-  PublicAndTwoZoneResource:
-    !And PublicType, TwoZoneResource
-#   ThreeZoneResource: 
-#     !Equals [ !Ref ZonesRequired, 3 ]
-#   TwoLayerResource: 
-#     !Or
-#     - !Equals [ !Ref NetworkLayers, 2 ]
-#     - !Equals [ !Ref NetworkLayers, 3 ]
-#   ThreeLayerResource: 
-#     !Equals [ !Ref NetworkLayers, 3 ]
+Mappings: 
+  VpcStructure: 
+    private: 
+      "1": ["private"]
+      "2": ["private","persistence"]
+      "3": ["private","public","persistence"]
+    public: 
+      "1": ["public"]
+      "2": ["private","public"]
+      "3": ["private","public","persistence"]
 
+Conditions:
+  TwoLayerResource: 
+    !Or
+    - !Equals [ !Ref NetworkLayers, 2 ]
+    - !Equals [ !Ref NetworkLayers, 3 ]
+  ThreeLayerResource: 
+    !Equals [ !Ref NetworkLayers, 3 ]
 
 Resources:
-# Route tables with associations
-  NetworkLayer1:
+# Public route table with associations
+  RouteTable1:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: public-route.yaml
+      TemplateURL: route.yaml
       TimeoutInMinutes: 5
       Parameters:
         VpcId:            !Ref VpcId
         EnvName:          !Ref EnvName
+        EnvType:          !Select 
+        - 0
+        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
         ZonesRequired:    !Ref ZonesRequired
 
-#   PrivateRouteTableA:
-#     Condition: TwoLayerResource
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-private-a
-#   AttachPrivateSubnetA:
-#     Condition: TwoLayerResource
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-private-a:id"
-#       RouteTableId: !Ref PrivateRouteTableA
+# Private route tables with associations
+  RouteTable2:
+    Type: AWS::CloudFormation::Stack
+    Condition: TwoLayerResource
+    Properties:
+      TemplateURL: route.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        VpcId:            !Ref VpcId
+        EnvName:          !Ref EnvName
+        EnvType:          !Select 
+        - 1
+        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
+        ZonesRequired:    !Ref ZonesRequired
 
-#   PrivateRouteTableB:
-#     Condition: [TwoLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-private-b
-#   AttachPrivateSubnetB:
-#     Condition: [TwoLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-private-b:id"
-#       RouteTableId: !Ref PrivateRouteTableB
-  
-#   PrivateRouteTableC:
-#     Condition: [TwoLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-private-c
-#   AttachPrivateSubnetC:
-#     Condition: [TwoLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-private-c:id"
-#       RouteTableId: !Ref PrivateRouteTableC
-
-#   PersistenceRouteTableA:
-#     Condition: ThreeLayerResource
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-persistence-a
-#   AttachPersistenceSubnetA:
-#     Condition: ThreeLayerResource
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-persistence-a:id"
-#       RouteTableId: !Ref PersistenceRouteTableA
-
-#   PersistenceRouteTableB:
-#     Condition: [ThreeLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-persistence-b
-#   AttachPersistenceSubnetB:
-#     Condition: [ThreeLayerResource, TwoZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-persistence-b:id"
-#       RouteTableId: !Ref PersistenceRouteTableB
-
-#   PersistenceRouteTableC:
-#     Condition: [ThreeLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::RouteTable
-#     Properties:
-#       VpcId: !Ref VpcId
-#       Tags:
-#       - Key: Name
-#         Value: !Sub ${EnvName}:rt-persistence-c
-#   AttachPersistenceSubnetC:
-#     Condition: [ThreeLayerResource, ThreeZoneResource]
-#     Type: AWS::EC2::SubnetRouteTableAssociation
-#     Properties:
-#       SubnetId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:sn-persistence-c:id"
-#       RouteTableId: !Ref PersistenceRouteTableC
-
-# # Routes
-#   InternetAccess:
-#     Condition: PublicTypeTable
-#     Type: AWS::EC2::Route
-#     Properties:
-#       DestinationCidrBlock: 0.0.0.0/0
-#       RouteTableId: !Ref PublicRouteTable
-#       GatewayId:
-#         Fn::ImportValue:
-#           !Sub "${EnvName}:igw:id"
-
-# Outputs:
-#   PublicRouteTable:
-#     Value: !Ref PublicRouteTable
-#     Description: A reference to the Public RouteTable 
-#     Export:
-#       Name: !Sub ${EnvName}:rt-public:id
-
-#   PrivateRouteTableA:
-#     Value: !Ref PrivateRouteTableA
-#     Description: A reference to the Private RouteTableA
-#     Export:
-#       Name: !Sub ${EnvName}:rt-private-a:id 
-#   PrivateRouteTableB:
-#     Condition: TwoZoneResource
-#     Value: !Ref PrivateRouteTableB
-#     Description: A reference to the Private RouteTableB
-#     Export:
-#       Name: !Sub ${EnvName}:rt-private-b:id
-#   PrivateRouteTableC:
-#     Condition: ThreeZoneResource
-#     Value: !Ref PrivateRouteTableC
-#     Description: A reference to the Private RouteTableC
-#     Export:
-#       Name: !Sub ${EnvName}:rt-private-c:id 
-
-#   PersistenceRouteTableA:
-#     Value: !Ref PersistenceRouteTableA
-#     Description: A reference to the Persistence RouteTableA
-#     Export:
-#       Name: !Sub ${EnvName}:rt-persistence-a:id
-#   PersistenceRouteTableB:
-#     Condition: TwoZoneResource
-#     Value: !Ref PersistenceRouteTableB
-#     Description: A reference to the Persistence RouteTableB
-#     Export:
-#       Name: !Sub ${EnvName}:rt-persistence-b:id
-#   PersistenceRouteTableC:
-#     Condition: ThreeZoneResource
-#     Value: !Ref PersistenceRouteTableC
-#     Description: A reference to the Persistence RouteTableC
-#     Export:
-#       Name: !Sub ${EnvName}:rt-persistence-c:id
+# Persistence route tables with associations
+  RouteTable3:
+    Type: AWS::CloudFormation::Stack
+    Condition: ThreeLayerResource
+    Properties:
+      TemplateURL: route.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        VpcId:            !Ref VpcId
+        EnvName:          !Ref EnvName
+        EnvType:          !Select 
+        - 2
+        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
+        ZonesRequired:    !Ref ZonesRequired

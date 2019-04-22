@@ -84,8 +84,8 @@ Resources:
         SubnetCidrBlocks: !GetAtt CidrBlockCalculation.NetworkLayer1
 
   NetworkLayer2:
-    Condition: TwoLayerResource
     Type: AWS::CloudFormation::Stack
+    Condition: TwoLayerResource
     Properties:
       TemplateURL: subnet.yaml
       TimeoutInMinutes: 5
@@ -100,8 +100,8 @@ Resources:
         SubnetCidrBlocks: !GetAtt CidrBlockCalculation.NetworkLayer2
 
   NetworkLayer3:
-    Condition: ThreeLayerResource
     Type: AWS::CloudFormation::Stack
+    Condition: ThreeLayerResource
     Properties:
       TemplateURL: subnet.yaml
       TimeoutInMinutes: 5
