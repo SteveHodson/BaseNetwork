@@ -26,43 +26,54 @@ Parameters:
   #   Default: 2
   #   ConstraintDescription: Must be a number between 1 and 3 inclusive.
   #   Type: Number
-  VpcType:
-    Description: Determine a public or private VPC
+  EnvType:
+    Description: Type of env, used to find the associated subnets
     AllowedValues: 
       - public
       - private
-    ConstraintDescription: Must be either public or private.
+      - persistence
+    ConstraintDescription: Must be either public, private or persistence.
     Default: public
     Type: String  
 
 Conditions:
-  PublicTypeTable: 
-    !Equals [ !Ref VpcType, public]
   TwoZoneResource: 
     !Or [ !Equals [ !Ref ZonesRequired, 2 ], !Equals [ !Ref ZonesRequired, 3 ] ]
-  PublicAndTwoZoneResource:
-    !And PublicType, TwoZoneResource
-#   ThreeZoneResource: 
-#     !Equals [ !Ref ZonesRequired, 3 ]
-#   TwoLayerResource: 
-#     !Or
-#     - !Equals [ !Ref NetworkLayers, 2 ]
-#     - !Equals [ !Ref NetworkLayers, 3 ]
-#   ThreeLayerResource: 
-#     !Equals [ !Ref NetworkLayers, 3 ]
-
+  ThreeZoneResource: 
+    !Equals [ !Ref ZonesRequired, 3 ]
 
 Resources:
 # Route tables with associations
-  NetworkLayer1:
-    Type: AWS::CloudFormation::Stack
+  RouteTable:
+    Type: AWS::EC2::RouteTable
     Properties:
-      TemplateURL: public-route.yaml
-      TimeoutInMinutes: 5
-      Parameters:
-        VpcId:            !Ref VpcId
-        EnvName:          !Ref EnvName
-        ZonesRequired:    !Ref ZonesRequired
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:rt-${EnvType}
+  AttachSubnetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-a:id"
+      RouteTableId: !Ref PublicRouteTable
+  AttachSubnetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: TwoZoneResource
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-b:id"
+      RouteTableId: !Ref PublicRouteTable
+  AttachSubnetC:
+    Condition: ThreeZoneResource
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-c:id"
+      RouteTableId: !Ref PublicRouteTable
 
 #   PrivateRouteTableA:
 #     Condition: TwoLayerResource
