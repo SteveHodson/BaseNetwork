@@ -18,7 +18,7 @@ Parameters:
     Default: 1
     MinValue: 1
     MaxValue: 4
-    Type: String
+    Type: Number
   NetworkLayers:
     Description: Number of layers to be used.
     MaxValue: 3

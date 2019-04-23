@@ -17,7 +17,7 @@ Parameters:
     Default: 1
     MinValue: 1
     MaxValue: 3
-    Type: String
+    Type: Number
   EnvType:
     Description: Type of env, used to find the associated subnets
     AllowedValues: 
