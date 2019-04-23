@@ -26,8 +26,9 @@ def handler(event, context):
     '''
     # There is nothing to do for a update/delete request
     if event['RequestType'] != 'Create':
+        logger.warn(f"Calling the {context.function_name} when NOT creating a VPC.")
         return send_response(event, context, SUCCESS, 
-        reason=f"Calling the {context.getFunctionName()} when NOT creating a VPC.")
+        reason=f"Calling the {context.function_name} when NOT creating a VPC.")
 
     # Variables used in this algorithm
     response_data = {}
