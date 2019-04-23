@@ -16,7 +16,7 @@ Parameters:
     Description: Number of Zones required
     Default: 1
     MinValue: 1
-    MaxValue: 3
+    MaxValue: 4
     Type: Number
   EnvType:
     Description: Type of env, used to find the associated subnets
@@ -29,17 +29,34 @@ Parameters:
     Type: String  
 
 Conditions:
-  TwoZoneResource: 
-    !Or
+  # TwoZoneResource: 
+  #   !Or
+  #     - !Equals [ !Ref ZonesRequired, 2 ]
+  #     - !Equals [ !Ref ZonesRequired, 3 ]
+  #     - !Equals [ !Ref ZonesRequired, 4 ]
+  # ThreeZoneResource: 
+  #   !Or
+  #     - !Equals [ !Ref ZonesRequired, 3 ]
+  #     - !Equals [ !Ref ZonesRequired, 4 ] 
+  # FourZoneResource: 
+  #   !Equals [ !Ref ZonesRequired, 4 ]
+  
+  NonPublicTwoZoneResource: !And
+    - !Not [ !Equals [ !Ref EnvType, public ] ]
+    - !Or 
       - !Equals [ !Ref ZonesRequired, 2 ]
       - !Equals [ !Ref ZonesRequired, 3 ]
       - !Equals [ !Ref ZonesRequired, 4 ]
-  ThreeZoneResource: 
-    !Or
+
+  NonPublicThreeZoneResource: !And
+    - !Not [ !Equals [ !Ref EnvType, public ] ]
+    - !Or 
+      - !Equals [ !Ref ZonesRequired, 2 ]
       - !Equals [ !Ref ZonesRequired, 3 ]
-      - !Equals [ !Ref ZonesRequired, 4 ] 
-  FourZoneResource: 
-    !Equals [ !Ref ZonesRequired, 4 ]
+
+  NonPublicFourZoneResource: !And
+    - !Not [ !Equals [ !Ref EnvType, public ] ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
 
 Resources:
   RouteTableA:
@@ -59,7 +76,7 @@ Resources:
 
   RouteTableB:
     Type: AWS::EC2::RouteTable
-    Condition: TwoZoneResource
+    Condition: NonPublicTwoZoneResource
     Properties:
       VpcId: !Ref VpcId
       Tags:
@@ -67,16 +84,16 @@ Resources:
         Value: !Sub ${EnvName}:rt-${EnvType}-b
   AttachSubnetB:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: TwoZoneResource
+    Condition: NonPublicTwoZoneResource
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-b:id"
-      RouteTableId: !Ref RouteTableB
+      RouteTableId: !If [NonPublicTwoZoneResource, !Ref RouteTableB, !Ref RouteTableA ]
   
   RouteTableC:
     Type: AWS::EC2::RouteTable
-    Condition: ThreeZoneResource
+    Condition: NonPublicThreeZoneResource
     Properties:
       VpcId: !Ref VpcId
       Tags:
@@ -84,15 +101,16 @@ Resources:
         Value: !Sub ${EnvName}:rt-${EnvType}-c
   AttachSubnetC:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: ThreeZoneResource
+    Condition: NonPublicThreeZoneResource
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-c:id"
-      RouteTableId: !Ref RouteTableC
+      RouteTableId: !If [NonPublicThreeZoneResource, !Ref RouteTableC, !Ref RouteTableA ]
+
   RouteTableD:
     Type: AWS::EC2::RouteTable
-    Condition: FourZoneResource
+    Condition: NonPublicFourZoneResource
     Properties:
       VpcId: !Ref VpcId
       Tags:
@@ -100,12 +118,12 @@ Resources:
         Value: !Sub ${EnvName}:rt-${EnvType}-d
   AttachSubnetD:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: FourZoneResource
+    Condition: NonPublicFourZoneResource
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-d:id"
-      RouteTableId: !Ref RouteTableD
+      RouteTableId: !If [NonPublicFourZoneResource, !Ref RouteTableD, !Ref RouteTableA ]
 
 Outputs:
   RouteTableA:
@@ -114,19 +132,19 @@ Outputs:
     Export:
       Name: !Sub ${EnvName}:rt-${EnvType}-a:id 
   RouteTableB:
-    Condition: TwoZoneResource
+    Condition: NonPublicTwoZoneResource
     Value: !Ref RouteTableB
     Description: A reference to the RouteTableB
     Export:
       Name: !Sub ${EnvName}:rt-${EnvType}-b:id
   RouteTableC:
-    Condition: ThreeZoneResource
+    Condition: NonPublicThreeZoneResource
     Value: !Ref RouteTableC
     Description: A reference to the RouteTableC
     Export:
       Name: !Sub ${EnvName}:rt-${EnvType}-c:id 
   RouteTableD:
-    Condition: FourZoneResource
+    Condition: NonPublicFourZoneResource
     Value: !Ref RouteTableD
     Description: A reference to the RouteTableD
     Export:
