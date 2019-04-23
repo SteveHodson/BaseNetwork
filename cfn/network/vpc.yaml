@@ -117,7 +117,7 @@ Resources:
     Type: AWS::EC2::FlowLog
     Properties:
       DeliverLogsPermissionArn: !GetAtt FlowLogsRole.Arn
-      LogGroupName: !Sub ${EnvName}-flowlogs
+      LogGroupName: !Sub /tfs/${EnvName}/FlowLogs
       ResourceId: !Ref Vpc
       ResourceType: VPC
       TrafficType: ALL
@@ -125,15 +125,15 @@ Resources:
   VpcFlowLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub ${EnvName}-flowlogs 
-      RetentionInDays: 3
+      LogGroupName: !Sub /tfs/${EnvName}/FlowLogs
+      RetentionInDays: 1
 
   VpcFlowLogStream:
     DependsOn: VpcFlowLogGroup
     Type: AWS::Logs::LogStream
     Properties:
-      LogGroupName: !Sub ${EnvName}-flowlogs
-      LogStreamName: !Sub ${EnvName}-vpc-flowlogs
+      LogGroupName: !Sub /tfs/${EnvName}/FlowLogs
+      LogStreamName: vpc-flowlogs
 
 Outputs:
   VpcId:

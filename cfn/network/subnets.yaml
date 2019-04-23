@@ -83,34 +83,34 @@ Resources:
         ZonesRequired:    !Ref ZonesRequired
         SubnetCidrBlocks: !GetAtt CidrBlockCalculation.NetworkLayer1
 
-  NetworkLayer2:
-    Type: AWS::CloudFormation::Stack
-    Condition: TwoLayerResource
-    Properties:
-      TemplateURL: subnet.yaml
-      TimeoutInMinutes: 5
-      Parameters:
-        VpcId:            !Ref VpcId
-        EnvName:          !Ref EnvName
-        SubnetType:       !Select 
-        - 1
-        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
-        VpcCidrBlock:     !Ref VpcCidrBlock
-        ZonesRequired:    !Ref ZonesRequired
-        SubnetCidrBlocks: !GetAtt CidrBlockCalculation.NetworkLayer2
+  # NetworkLayer2:
+  #   Type: AWS::CloudFormation::Stack
+  #   Condition: TwoLayerResource
+  #   Properties:
+  #     TemplateURL: subnet.yaml
+  #     TimeoutInMinutes: 5
+  #     Parameters:
+  #       VpcId:            !Ref VpcId
+  #       EnvName:          !Ref EnvName
+  #       SubnetType:       !Select 
+  #       - 1
+  #       - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
+  #       VpcCidrBlock:     !Ref VpcCidrBlock
+  #       ZonesRequired:    !Ref ZonesRequired
+  #       SubnetCidrBlocks: !GetAtt CidrBlockCalculation.NetworkLayer2
 
-  NetworkLayer3:
-    Type: AWS::CloudFormation::Stack
-    Condition: ThreeLayerResource
-    Properties:
-      TemplateURL: subnet.yaml
-      TimeoutInMinutes: 5
-      Parameters:
-        VpcId:            !Ref VpcId
-        EnvName:          !Ref EnvName
-        SubnetType:       !Select 
-        - 2
-        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
-        VpcCidrBlock:     !Ref VpcCidrBlock
-        ZonesRequired:    !Ref ZonesRequired
-        SubnetCidrBlocks: !GetAtt CidrBlockCalculation.NetworkLayer3
+  # NetworkLayer3:
+  #   Type: AWS::CloudFormation::Stack
+  #   Condition: ThreeLayerResource
+  #   Properties:
+  #     TemplateURL: subnet.yaml
+  #     TimeoutInMinutes: 5
+  #     Parameters:
+  #       VpcId:            !Ref VpcId
+  #       EnvName:          !Ref EnvName
+  #       SubnetType:       !Select 
+  #       - 2
+  #       - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
+  #       VpcCidrBlock:     !Ref VpcCidrBlock
+  #       ZonesRequired:    !Ref ZonesRequired
+  #       SubnetCidrBlocks: !GetAtt CidrBlockCalculation.NetworkLayer3
