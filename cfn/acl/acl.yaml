@@ -5,7 +5,6 @@ Description: >
   in later scripts by importing the exported ACL references.
   * NetworkACL
   * Association with Subnets
-  * Rules
 
 Parameters:
   VpcId:
@@ -18,126 +17,75 @@ Parameters:
     Description: Number of Zones required
     Default: 1
     MinValue: 1
-    MaxValue: 3
+    MaxValue: 4
     Type: Number
+  EnvType:
+    Description: Type of env, used to find the associated subnets
+    AllowedValues: 
+      - public
+      - private
+      - persistence
+    ConstraintDescription: Must be either public, private or persistence.
+    Default: public
+    Type: String
 
 Conditions:
   TwoZoneResource: 
     !Or
     - !Equals [ !Ref ZonesRequired, 2 ]
     - !Equals [ !Ref ZonesRequired, 3 ]
-  ThreeZoneResource: 
-    !Equals [ !Ref ZonesRequired, 3 ]
-
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  ThreeZoneResource:
+    !Or
+    - !Equals [ !Ref ZonesRequired, 3 ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  FourZoneResource: 
+    !Equals [ !Ref ZonesRequired, 4 ]
+    
 Resources:
 # Network Access Control Lists
-  AclPublic:
+  AccessControlList:
     Type: AWS::EC2::NetworkAcl
     Properties:
       VpcId: !Ref VpcId
       Tags:
       - Key: Name
-        Value: !Sub ${EnvName}:acl-public
-  AssociationPublicSubnetA:
+        Value: !Sub ${EnvName}:acl-${EnvType}
+  AssociationSubnetA:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       SubnetId:
         Fn::ImportValue:
-          !Sub "${EnvName}:sn-public-a:id"
-      NetworkAclId: !Ref AclPublic
+          !Sub "${EnvName}:sn-${EnvType}-a:id"
+      NetworkAclId: !Ref AccessControlList
   AssociationPublicSubnetB:
     Condition: TwoZoneResource
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       SubnetId:
         Fn::ImportValue:
-          !Sub "${EnvName}:sn-public-b:id"
-      NetworkAclId: !Ref AclPublic
-  AssociationPublicSubnetC:
+          !Sub "${EnvName}:sn-${EnvType}-b:id"
+      NetworkAclId: !Ref AccessControlList
+  AssociationSubnetC:
     Condition: ThreeZoneResource
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       SubnetId:
         Fn::ImportValue:
-          !Sub "${EnvName}:sn-public-c:id"
-      NetworkAclId: !Ref AclPublic
-
-  AclPrivate:
-    Type: AWS::EC2::NetworkAcl
-    Properties:
-      VpcId: !Ref VpcId
-      Tags:
-      - Key: Name
-        Value: !Sub ${EnvName}:acl-private
-  AssociationPrivateSubnetA:
+          !Sub "${EnvName}:sn-${EnvType}-c:id"
+      NetworkAclId: !Ref AccessControlList
+  AssociationSubnetD:
+    Condition: FourZoneResource
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       SubnetId:
         Fn::ImportValue:
-          !Sub "${EnvName}:sn-private-a:id"
-      NetworkAclId: !Ref AclPrivate
-  AssociationPrivateSubnetB:
-    Condition: TwoZoneResource
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId:
-        Fn::ImportValue:
-          !Sub "${EnvName}:sn-private-b:id"
-      NetworkAclId: !Ref AclPrivate
-  AssociationPrivateSubnetC:
-    Condition: ThreeZoneResource
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId:
-        Fn::ImportValue:
-          !Sub "${EnvName}:sn-private-c:id"
-      NetworkAclId: !Ref AclPrivate
-
-  AclPersistence:
-    Type: AWS::EC2::NetworkAcl
-    Properties:
-      VpcId: !Ref VpcId
-      Tags:
-      - Key: Name
-        Value: !Sub ${EnvName}:acl-persistence
-  AssociationPersistenceSubnetA:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId:
-        Fn::ImportValue:
-          !Sub "${EnvName}:sn-persistence-a:id"
-      NetworkAclId: !Ref AclPersistence
-  AssociationPersistenceSubnetB:
-    Condition: TwoZoneResource
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId:
-        Fn::ImportValue:
-          !Sub "${EnvName}:sn-persistence-b:id"
-      NetworkAclId: !Ref AclPersistence
-  AssociationPersistenceSubnetC:
-    Condition: ThreeZoneResource
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId:
-        Fn::ImportValue:
-          !Sub "${EnvName}:sn-persistence-c:id"
-      NetworkAclId: !Ref AclPersistence
-  
+          !Sub "${EnvName}:sn-${EnvType}-d:id"
+      NetworkAclId: !Ref AccessControlList
 
 Outputs:
   AclPublic:
-    Description: Public ACL reference
-    Value: !Ref AclPublic
+    Description: Access Control List internal reference
+    Value: !Ref AccessControlList
     Export:
-      Name: !Sub ${EnvName}:acl-public:id
-  AclPrivate:
-    Description: Private ACL reference
-    Value: !Ref AclPrivate
-    Export:
-      Name: !Sub ${EnvName}:acl-private:id
-  AclPersistence:
-    Description: Persistence ACL reference
-    Value: !Ref AclPersistence
-    Export:
-      Name: !Sub ${EnvName}:acl-persistence:id
+      Name: !Sub ${EnvName}:acl-${EnvType}:id

@@ -28,19 +28,7 @@ Parameters:
     Default: public
     Type: String  
 
-Conditions:
-  # TwoZoneResource: 
-  #   !Or
-  #     - !Equals [ !Ref ZonesRequired, 2 ]
-  #     - !Equals [ !Ref ZonesRequired, 3 ]
-  #     - !Equals [ !Ref ZonesRequired, 4 ]
-  # ThreeZoneResource: 
-  #   !Or
-  #     - !Equals [ !Ref ZonesRequired, 3 ]
-  #     - !Equals [ !Ref ZonesRequired, 4 ] 
-  # FourZoneResource: 
-  #   !Equals [ !Ref ZonesRequired, 4 ]
-  
+Conditions:  
   NonPublicTwoZoneResource: !And
     - !Not [ !Equals [ !Ref EnvType, public ] ]
     - !Or 
