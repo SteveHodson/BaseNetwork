@@ -39,7 +39,8 @@ CidrBlockCalculation:
 ```
 ## Build
 ```sh
-python3 -m env venv
+# At the project root set up a virtual environment
+python3 -m env venv 
 source env/bin/activate
 pip install -r requirements
 # create a bucket to store assets
