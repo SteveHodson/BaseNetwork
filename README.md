@@ -21,7 +21,7 @@ The reason for the different types is informed by my own experience of building 
 
 ## Usage
 Firstly you will need to build and deploy the Lambda custom resource.
-[link][https://github.com/SteveHodson/BaseNetwork/tree/master/custom/README.md]
+[link](https://github.com/SteveHodson/BaseNetwork/tree/master/custom/README.md)
 
 Once you have this custom resource installed you can deploy your network as follows:
 * Update the `build.properties` as required
