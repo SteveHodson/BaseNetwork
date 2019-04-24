@@ -19,11 +19,12 @@ Conditions:
     - !Equals [ !Ref ZonesRequired, 2 ]
     - !Equals [ !Ref ZonesRequired, 3 ]
     - !Equals [ !Ref ZonesRequired, 4 ]
-  ThreeZoneResource: 
+  ThreeZoneResource:
+    !Or
     - !Equals [ !Ref ZonesRequired, 3 ]
     - !Equals [ !Ref ZonesRequired, 4 ]
   FourZoneResource: 
-    - !Equals [ !Ref ZonesRequired, 4 ]
+    !Equals [ !Ref ZonesRequired, 4 ]
   
 Resources:
 # Define the EIPs

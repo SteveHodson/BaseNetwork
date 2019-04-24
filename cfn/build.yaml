@@ -101,12 +101,12 @@ Resources:
         VpcType:       !Ref VpcType
         
   # Delegate creation of ACL Rules to sub-Stack
-  # NatGatewaySubStack:
-  #   DependsOn: RoutesSubStack
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: nat/nat.yaml
-  #     TimeoutInMinutes: 5
-  #     Parameters:
-  #       EnvName: !Ref EnvName
-  #       ZonesRequired: !GetAtt SubnetSubStack.Outputs.ZonesAvailable
+  NatGatewaySubStack:
+    DependsOn: RoutesSubStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: nat/nat-gw.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        EnvName: !Ref EnvName
+        ZonesRequired: !Ref ZonesRequired
