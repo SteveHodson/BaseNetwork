@@ -1,7 +1,7 @@
 #
 # List of Parameters added from external source
 
-STACK_NAME ?= tfs-base-network-v1
+STACK_NAME ?= sh-base-network-v1
 ASSET_STORAGE ?= $(STACK_NAME)
 AWS_REGION := eu-west-1
 

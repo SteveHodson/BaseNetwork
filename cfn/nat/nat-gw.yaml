@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  This script will create two or three NAT Service Gateways
-  depending on the Region
+  This script will create two, three or four NAT Service Gateways
   * EIP
   * Nat Service Gateway and attach to hosting subnets
   * Modification of existing Route Tables
@@ -17,11 +16,15 @@ Parameters:
 Conditions:
   TwoZoneResource: 
     !Or
-    - !Equals [ !Ref ZonesRequired, "2" ]
-    - !Equals [ !Ref ZonesRequired, "3" ]
+    - !Equals [ !Ref ZonesRequired, 2 ]
+    - !Equals [ !Ref ZonesRequired, 3 ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
   ThreeZoneResource: 
-    !Equals [ !Ref ZonesRequired, "3" ]
-
+    - !Equals [ !Ref ZonesRequired, 3 ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  FourZoneResource: 
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  
 Resources:
 # Define the EIPs
   ZoneOneEIP:
@@ -35,6 +38,11 @@ Resources:
       Domain: vpc
   ZoneThreeEIP:
     Condition: ThreeZoneResource
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  ZoneFourEIP:
+    Condition: FourZoneResource
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
@@ -72,6 +80,17 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub ${EnvName}:nat-gw-c
+  ZoneFourNAT:
+    Condition: FourZoneResource
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt ZoneFourEIP.AllocationId
+      SubnetId: 
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-public-d:id"
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:nat-gw-d
 
 # Modify the private route tables
   PrivateRouteModificationA:
@@ -100,3 +119,12 @@ Resources:
           !Sub "${EnvName}:rt-private-c:id"
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref ZoneThreeNAT
+  PrivateRouteModificationD:
+    Condition: FourZoneResource
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:rt-private-d:id"
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref ZoneFourNAT
