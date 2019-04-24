@@ -4,7 +4,7 @@ This cloudformation custom resource utility lambda function will calculate all t
 Usually VPCs are broken up into subnets whose IP allocation size are equally distributed across the VPC. For instance a VPC whose CIDR block is /21 might have subnets whose IP allocations are all /24. 
 Whilst this approach works it does not take into account the functional use of the subnets.  There is another approach that divides the initial IP allocation by a half and recursively divides one of those halves by a half.  This approach will create IP allocation spaces each half the size of the previous.  In my experience a persistence subnet would require less nodes than say the public subnet which itself would require less nodes than a private subnet.
 Here an example of a VPC with three layers; note the relative sizes of the boxes refer to the relative sizes of the IP allocations.
-![Example VPC](https://github.com/SteveHodson/BaseNetwork/blob/master/Calculator.png "Example VPC")
+![Example VPC](https://github.com/SteveHodson/BaseNetwork/blob/master/custom/Calculator.png "Example VPC")
 
 ## Parameters
 This function requires the following parameters:
