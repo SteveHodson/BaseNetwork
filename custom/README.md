@@ -39,7 +39,13 @@ CidrBlockCalculation:
 ```
 ## Build
 ```sh
-./install.sh [project_name]
+python3 -m env venv
+source env/bin/activate
+pip install -r requirements
+# create a bucket to store assets
+make create-store
+# build and deply the cidr calculator custom resource
+make deploy-custom
 ```
 The installation script expects a unique name that will be used when creating the cloudformation stack.  The choice of creating this separately from the VPC creation is that this utility function can be used for many VPC creation stacks.
 This can be tested in the AWS MAnagement Console using the following json:
