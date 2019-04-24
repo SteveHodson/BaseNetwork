@@ -20,8 +20,7 @@ Public layers will have a single Route Table and an IGW.
 The reason for the different types is informed by my own experience of building networks within other companies; some wanted the standard three tier model but others wanted a single facade tier that was publicly facing whilst having a number of private two layer networks joined by either peering or some sort of transit vpc.
 
 ## Usage
-Firstly you will need to build and deploy the Lambda custom resource.
-[link](https://github.com/SteveHodson/BaseNetwork/tree/master/custom/README.md)
+Firstly you will need to build and deploy the [Lambda custom resource](https://github.com/SteveHodson/BaseNetwork/tree/master/custom/README.md).
 
 Once you have this custom resource installed you can deploy your network as follows:
 * Update the `build.properties` as required
