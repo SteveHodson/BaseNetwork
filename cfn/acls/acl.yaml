@@ -1,0 +1,91 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Creates the Access Control Lists with a basic set of configuration.  These should be added to 
+  in later scripts by importing the exported ACL references.
+  * NetworkACL
+  * Association with Subnets
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Internal Id of an existing VPC
+  EnvName:
+    Type: String
+    Description: Name of the environment, used for tagging resources
+  ZonesRequired:
+    Description: Number of Zones required
+    Default: 1
+    MinValue: 1
+    MaxValue: 4
+    Type: Number
+  EnvType:
+    Description: Type of env, used to find the associated subnets
+    AllowedValues: 
+      - public
+      - private
+      - persistence
+    ConstraintDescription: Must be either public, private or persistence.
+    Default: public
+    Type: String
+
+Conditions:
+  TwoZoneResource: 
+    !Or
+    - !Equals [ !Ref ZonesRequired, 2 ]
+    - !Equals [ !Ref ZonesRequired, 3 ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  ThreeZoneResource:
+    !Or
+    - !Equals [ !Ref ZonesRequired, 3 ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  FourZoneResource: 
+    !Equals [ !Ref ZonesRequired, 4 ]
+    
+Resources:
+# Network Access Control Lists
+  AccessControlList:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvName}:acl-${EnvType}
+  AssociationSubnetA:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-a:id"
+      NetworkAclId: !Ref AccessControlList
+  AssociationPublicSubnetB:
+    Condition: TwoZoneResource
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-b:id"
+      NetworkAclId: !Ref AccessControlList
+  AssociationSubnetC:
+    Condition: ThreeZoneResource
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-c:id"
+      NetworkAclId: !Ref AccessControlList
+  AssociationSubnetD:
+    Condition: FourZoneResource
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:sn-${EnvType}-d:id"
+      NetworkAclId: !Ref AccessControlList
+
+Outputs:
+  AclPublic:
+    Description: Access Control List internal reference
+    Value: !Ref AccessControlList
+    Export:
+      Name: !Sub ${EnvName}:acl-${EnvType}:id

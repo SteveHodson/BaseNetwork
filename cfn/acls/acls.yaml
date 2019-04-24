@@ -1,0 +1,97 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Creates the Access Control Lists with a basic set of configuration.  These should be added to 
+  in later scripts by importing the exported ACL references.
+  * NetworkACL
+  * Association with Subnets
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Internal Id of an existing VPC
+  EnvName:
+    Type: String
+    Description: Name of the environment, used for tagging resources
+  ZonesRequired:
+    Description: Number of Zones required
+    Default: 1
+    MinValue: 1
+    MaxValue: 3
+    Type: Number
+  NetworkLayers:
+    Description: Number of layers to be used.
+    MaxValue: 3
+    MinValue: 1
+    Default: 2
+    ConstraintDescription: Must be a number between 1 and 3 inclusive.
+    Type: Number
+  VpcType:
+    Description: Determine a public or private VPC
+    AllowedValues: 
+      - public
+      - private
+    ConstraintDescription: Must be either public or private.
+    Default: public
+    Type: String
+
+Mappings: 
+  VpcStructure: 
+    private: 
+      "1": ["private"]
+      "2": ["private","persistence"]
+      "3": ["private","public","persistence"]
+    public: 
+      "1": ["public"]
+      "2": ["private","public"]
+      "3": ["private","public","persistence"]
+
+Conditions:
+  TwoLayerResource: 
+    !Or
+    - !Equals [ !Ref NetworkLayers, 2 ]
+    - !Equals [ !Ref NetworkLayers, 3 ]
+  ThreeLayerResource: 
+    !Equals [ !Ref NetworkLayers, 3 ]
+
+Resources:
+  AccessControlList1:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: acl.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        VpcId:            !Ref VpcId
+        EnvName:          !Ref EnvName
+        EnvType:          !Select 
+        - 0
+        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
+        ZonesRequired:    !Ref ZonesRequired
+
+  AccessControlList2:
+    Type: AWS::CloudFormation::Stack
+    Condition: TwoLayerResource
+    Properties:
+      TemplateURL: acl.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        VpcId:            !Ref VpcId
+        EnvName:          !Ref EnvName
+        EnvType:          !Select 
+        - 1
+        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
+        ZonesRequired:    !Ref ZonesRequired
+
+  AccessControlList3:
+    Type: AWS::CloudFormation::Stack
+    Condition: ThreeLayerResource
+    Properties:
+      TemplateURL: acl.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        VpcId:            !Ref VpcId
+        EnvName:          !Ref EnvName
+        EnvType:          !Select 
+        - 2
+        - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
+        ZonesRequired:    !Ref ZonesRequired

@@ -75,6 +75,7 @@ Resources:
   # Delegate creation of Routes to sub-Stack
   RoutesSubStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: SubnetSubStack
     Properties:
       TemplateURL: routes/routes.yaml
       TimeoutInMinutes: 5
@@ -84,17 +85,21 @@ Resources:
         NetworkLayers: !Ref NetworkLayers
         ZonesRequired: !Ref ZonesRequired
         VpcType:       !Ref VpcType
+
   # Delegate creation of ACLs to sub-Stack
-  # AclSubStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: acls/acls.yaml
-  #     TimeoutInMinutes: 5
-  #     Parameters:
-  #       VpcId: !GetAtt VpcSubStack.Outputs.VpcId
-  #       EnvName: !Ref EnvName
-  #       ZonesRequired: !GetAtt SubnetSubStack.Outputs.ZonesAvailable
-  
+  AclSubStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SubnetSubStack
+    Properties:
+      TemplateURL: acls/acls.yaml
+      TimeoutInMinutes: 5
+      Parameters:
+        VpcId:         !GetAtt VpcSubStack.Outputs.VpcId
+        EnvName:       !Ref EnvName
+        NetworkLayers: !Ref NetworkLayers
+        ZonesRequired: !Ref ZonesRequired
+        VpcType:       !Ref VpcType
+        
   # Delegate creation of ACL Rules to sub-Stack
   # NatGatewaySubStack:
   #   DependsOn: RoutesSubStack
