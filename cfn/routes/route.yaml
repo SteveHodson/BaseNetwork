@@ -28,7 +28,9 @@ Parameters:
     Default: public
     Type: String  
 
-Conditions:  
+Conditions:
+  PublicEnvType:
+    !Equals [ !Ref EnvType, public ]
   NonPublicTwoZoneResource: !And
     - !Not [ !Equals [ !Ref EnvType, public ] ]
     - !Or 
@@ -112,6 +114,17 @@ Resources:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-d:id"
       RouteTableId: !If [NonPublicFourZoneResource, !Ref RouteTableD, !Ref RouteTableA ]
+
+  # Define a standard route for the public route table
+  InternetAccess:
+    Type: AWS::EC2::Route
+    Condition: PublicEnvType
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref RouteTableA
+      GatewayId:
+        Fn::ImportValue:
+          !Sub "${EnvName}:igw:id"
 
 Outputs:
   RouteTableA:
