@@ -154,10 +154,8 @@ Outputs:
     Value: !Ref SubnetD
     Export:
       Name: !Sub ${EnvName}:sn-${SubnetType}-d:id
-  NetworkLayerCidr1:
+  NetworkLayerCidrBlock:
     Description: The Cidr Block for the current tier
-    Value: !Join
-    - ","
-    - !Ref SubnetCidrBlocks
+    Value: !Select [0, !Ref SubnetCidrBlocks]
     Export:
-      Name: !Sub ${EnvName}:sn-${SubnetType}:list
+      Name: !Sub ${EnvName}:sn-${SubnetType}:cidr

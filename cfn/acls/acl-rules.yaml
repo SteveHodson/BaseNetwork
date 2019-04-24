@@ -8,29 +8,11 @@ Parameters:
   EnvName:
     Description: Name of the environment, used for tagging resources
     Type: String
-  EnvType:
-    Description: Type of env, used to find the associated subnets
-    AllowedValues: 
-      - public
-      - private
-      - persistence
-    ConstraintDescription: Must be either public, private or persistence.
-    Default: public
-    Type: String
-
-Conditions:
-  PublicResource: 
-    !Equals [ !Ref EnvType, public ]
-  PrivateResource:
-    !Equals [ !Ref EnvType, private ]
-  PersistenceResource: 
-    !Equals [ !Ref EnvType, persistence ]
 
 Resources:
 # Public Subnet Rules
   PublicAnyHTTPInbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PublicResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -44,7 +26,6 @@ Resources:
         To: 80
   PublicAnyHTTPSInbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PublicResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -56,10 +37,8 @@ Resources:
       PortRange:
         From: 443
         To: 443
-
   PublicPrivateHTTPOutbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PublicResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -74,10 +53,8 @@ Resources:
         From: 80
         To: 80
       Egress: true
-
   PublicPrivateHTTPSOutbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PublicResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -92,10 +69,8 @@ Resources:
         From: 443
         To: 443
       Egress: true
-
   PublicEphemeralInbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PublicResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -111,7 +86,6 @@ Resources:
         To: 65535
   PublicEphemeralOutbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PublicResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -128,7 +102,6 @@ Resources:
 # Private Subnet Rules
   PrivatePublicHTTPInbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PrivateResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -144,7 +117,6 @@ Resources:
         To: 80
   PrivatePublicHTTPSInbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PrivateResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -160,7 +132,6 @@ Resources:
         To: 443
   PrivatePublicEphemeralOutbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PrivateResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -177,7 +148,6 @@ Resources:
       Egress: true
   PrivatePersistEphemeralInbound:
     Type: AWS::EC2::NetworkAclEntry
-    Condition: PrivateResource
     Properties:
       NetworkAclId:
         Fn::ImportValue:
@@ -193,7 +163,6 @@ Resources:
         To: 65535
 
 # Persistence Subnet Rules
-# Specific persistence layer ports will be defined later due to unknown data source
   PersistenceEphemeralOutbound:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
