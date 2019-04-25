@@ -41,8 +41,8 @@ Conditions:
   NonPublicThreeZoneResource: !And
     - !Not [ !Equals [ !Ref EnvType, public ] ]
     - !Or 
-      - !Equals [ !Ref ZonesRequired, 2 ]
       - !Equals [ !Ref ZonesRequired, 3 ]
+      - !Equals [ !Ref ZonesRequired, 4 ]
 
   NonPublicFourZoneResource: !And
     - !Not [ !Equals [ !Ref EnvType, public ] ]

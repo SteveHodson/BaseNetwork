@@ -1,7 +1,7 @@
 #
 # List of Parameters added from external source
 
-STACK_NAME ?= sh-base-network-v1
+STACK_NAME ?= $(shell cat build.properties | grep StackName | cut -d '=' -f2)
 ASSET_STORAGE ?= $(STACK_NAME)
 AWS_REGION := eu-west-1
 
@@ -67,9 +67,9 @@ deploy: package
 		--region $(AWS_REGION) \
 		--parameter-overrides $(shell cat build.properties)
 
-	# @aws cloudformation update-termination-protection \
-	# 	--stack-name $(STACK_NAME) \
-	# 	--enable-termination-protection
+	@aws cloudformation update-termination-protection \
+		--stack-name $(STACK_NAME) \
+		--enable-termination-protection
 	$(MAKE) clean
 
 ## clean up resources associated with the network deployment
@@ -77,9 +77,9 @@ clean:
 	@rm packaged.yaml
 	
 delete-stack:
-	# @aws cloudformation update-termination-protection \
-    #             --stack-name $(STACK_NAME) \
-    #             --no-enable-termination-protection
+	@aws cloudformation update-termination-protection \
+                --stack-name $(STACK_NAME) \
+                --no-enable-termination-protection
 	@aws cloudformation delete-stack --stack-name $(STACK_NAME)
 
 events:
