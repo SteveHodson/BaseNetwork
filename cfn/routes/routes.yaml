@@ -55,7 +55,6 @@ Conditions:
     !Equals [ !Ref NetworkLayers, 3 ]
 
 Resources:
-# Public route table with associations
   RouteTable1:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -69,7 +68,6 @@ Resources:
         - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
         ZonesRequired:    !Ref ZonesRequired
 
-# Private route tables with associations
   RouteTable2:
     Type: AWS::CloudFormation::Stack
     Condition: TwoLayerResource
@@ -84,7 +82,6 @@ Resources:
         - Fn::FindInMap: [VpcStructure, !Ref VpcType, !Ref NetworkLayers]
         ZonesRequired:    !Ref ZonesRequired
 
-# Persistence route tables with associations
   RouteTable3:
     Type: AWS::CloudFormation::Stack
     Condition: ThreeLayerResource

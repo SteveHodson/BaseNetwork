@@ -37,16 +37,26 @@ Conditions:
       - !Equals [ !Ref ZonesRequired, 2 ]
       - !Equals [ !Ref ZonesRequired, 3 ]
       - !Equals [ !Ref ZonesRequired, 4 ]
-
   NonPublicThreeZoneResource: !And
     - !Not [ !Equals [ !Ref EnvType, public ] ]
     - !Or 
       - !Equals [ !Ref ZonesRequired, 3 ]
       - !Equals [ !Ref ZonesRequired, 4 ]
-
   NonPublicFourZoneResource: !And
     - !Not [ !Equals [ !Ref EnvType, public ] ]
     - !Equals [ !Ref ZonesRequired, 4 ]
+  
+  TwoZoneResource: 
+    !Or
+    - !Equals [ !Ref ZonesRequired, 2 ]
+    - !Equals [ !Ref ZonesRequired, 3 ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  ThreeZoneResource: 
+    !Or
+    - !Equals [ !Ref ZonesRequired, 3 ]
+    - !Equals [ !Ref ZonesRequired, 4 ]
+  FourZoneResource: 
+    !Equals [ !Ref ZonesRequired, 4 ]
 
 Resources:
   RouteTableA:
@@ -74,12 +84,12 @@ Resources:
         Value: !Sub ${EnvName}:rt-${EnvType}-b
   AttachSubnetB:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: NonPublicTwoZoneResource
+    Condition: TwoZoneResource
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-b:id"
-      RouteTableId: !If [NonPublicTwoZoneResource, !Ref RouteTableB, !Ref RouteTableA ]
+      RouteTableId: !If [ NonPublicTwoZoneResource, !Ref RouteTableB, !Ref RouteTableA ]
   
   RouteTableC:
     Type: AWS::EC2::RouteTable
@@ -91,12 +101,12 @@ Resources:
         Value: !Sub ${EnvName}:rt-${EnvType}-c
   AttachSubnetC:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: NonPublicThreeZoneResource
+    Condition: ThreeZoneResource
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-c:id"
-      RouteTableId: !If [NonPublicThreeZoneResource, !Ref RouteTableC, !Ref RouteTableA ]
+      RouteTableId: !If [ NonPublicThreeZoneResource, !Ref RouteTableC, !Ref RouteTableA ]
 
   RouteTableD:
     Type: AWS::EC2::RouteTable
@@ -108,12 +118,12 @@ Resources:
         Value: !Sub ${EnvName}:rt-${EnvType}-d
   AttachSubnetD:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: NonPublicFourZoneResource
+    Condition: FourZoneResource
     Properties:
       SubnetId:
         Fn::ImportValue:
           !Sub "${EnvName}:sn-${EnvType}-d:id"
-      RouteTableId: !If [NonPublicFourZoneResource, !Ref RouteTableD, !Ref RouteTableA ]
+      RouteTableId: !If [ NonPublicFourZoneResource, !Ref RouteTableD, !Ref RouteTableA ]
 
   # Define a standard route for the public route table
   InternetAccess:
