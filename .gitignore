@@ -4,3 +4,6 @@ env/
 # custom build
 dist/
 packaged.yaml
+
+# MacOS
+.DS_Store
